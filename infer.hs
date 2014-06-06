@@ -33,6 +33,8 @@ parse str
         = parse' str (((App (head stack) K) : (tail stack)) : stacks)
       | otherwise
         = parse' str ([K] : stacks)
+    parse' _ _ 
+      = error "Parse error: bad structure"
 
 -- Type variables are identified by an Int
 data Type 
