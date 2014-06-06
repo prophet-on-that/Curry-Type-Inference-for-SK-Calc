@@ -59,8 +59,32 @@ compose s t
     remainder 
       = deleteFirstsBy (\(a,b) (c,d) -> a == c) s t
 
+-- check whether a type variable is contained in a type
+contained_in :: Int -> Type -> Bool
+contained_in n (Var k)
+  = n == k
+contained_in n (Function t t')
+  = (contained_in n t) || (contained_in n t')
+
 -- principal type algorithm
 -- pt :: Term -> Type 
 
 -- type unification algorithm
--- unify :: Type -> Type -> Sub
+unify :: Type -> Type -> Sub
+unify (Var m) (Var n)
+  | m == n
+    = []
+unify (Var m) t
+  | not (contained_in m t)
+    = [((Var m), t)]
+  | otherwise 
+    = error "Ununifiable"
+unify t (Var m)
+  = unify (Var m) t
+unify (Function t t') (Function u u')
+  = compose s2 s1
+  where
+    s1 
+      = unify t u
+    s2
+      = unify (apply s1 t') (apply s1 u')
