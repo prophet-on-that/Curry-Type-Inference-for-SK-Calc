@@ -1,6 +1,6 @@
-main = do
-  term <- getLine
-  putStrLn (show (parse term))
+-- main = do
+--   term <- getLine
+--   putStrLn (show (parse term))
 
 data Term 
   = S | K | App Term Term
@@ -30,3 +30,18 @@ parse str
         = parse' str (((App (head stack) K) : (tail stack)) : stacks)
       | otherwise
         = parse' str ([K] : stacks)
+
+-- Type variables are identified by an Int
+data Type 
+  = Var Int | Function Type Type
+  deriving Show
+
+-- Represent substitutions in the natural way: map from Int to Int
+type Sub
+  = [(Int, Int)]
+
+-- principal type algorithm
+-- pt :: Term -> Type 
+
+-- type unification algorithm
+-- unify :: Type -> Type -> [(Int, Int)]
