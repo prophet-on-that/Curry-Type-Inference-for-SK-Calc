@@ -1,6 +1,9 @@
--- main = do
---   term <- getLine
---   putStrLn (show (parse term))
+import Data.List
+import Data.Maybe
+
+main = do
+term <- getLine
+putStrLn (show (parse term))
 
 data Term 
   = S | K | App Term Term
@@ -34,14 +37,30 @@ parse str
 -- Type variables are identified by an Int
 data Type 
   = Var Int | Function Type Type
-  deriving Show
+  deriving (Show, Eq)
 
--- Represent substitutions in the natural way: map from Int to Int
+-- Represent substitutions in the natural way: mapping types to types
+-- WARNING - user's responsibility to ensure this is a function 
 type Sub
-  = [(Int, Int)]
+  = [(Type, Type)]
+
+apply :: Sub -> Type -> Type
+apply s (Var n)
+  = fromMaybe (Var n) (lookup (Var n) s) 
+apply s (Function t t')
+  = Function (apply s t) (apply s t')
+
+-- compose s t == st (function composition)
+-- Pre: s, t are functions
+compose :: Sub -> Sub -> Sub
+compose s t 
+  = (zip (map fst t) (map (apply s) (map snd t))) ++ remainder
+  where 
+    remainder 
+      = deleteFirstsBy (\(a,b) (c,d) -> a == c) s t
 
 -- principal type algorithm
 -- pt :: Term -> Type 
 
 -- type unification algorithm
--- unify :: Type -> Type -> [(Int, Int)]
+-- unify :: Type -> Type -> Sub
