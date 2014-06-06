@@ -1,9 +1,9 @@
 import Data.List
 import Data.Maybe
 
-main = do
-term <- getLine
-putStrLn (show (parse term))
+-- main = do
+-- term <- getLine
+-- putStrLn (show (parse term))
 
 data Term 
   = S | K | App Term Term
@@ -69,7 +69,35 @@ contained_in n (Function t t')
   = (contained_in n t) || (contained_in n t')
 
 -- principal type algorithm
--- pt :: Term -> Type 
+pt :: Term -> Type 
+pt 
+  = fst . pt' 
+  where 
+    -- Returned Int is the largest allocated type variable identifier. Needed
+    -- to handle `freshness'. Additionally, indexing identifiers from 1 here.
+    pt' :: Term -> (Type, Int)
+    pt' S
+      = ((Function (Function (Var 1) (Function (Var 2) (Var 3))) (Function (Function (Var 1) (Var 2)) (Function (Var 1) (Var 3)))), 3)
+    pt' K 
+      = ((Function (Var 1) (Function (Var 2) (Var 1))), 2)
+    pt' (App p q)
+      = (apply s (Var k), k)
+      where
+        (t, n)
+          = pt' p
+        (t', n')
+          = pt' q
+        k 
+          = n + n' + 1
+        s 
+          = unify t (Function (freshen n t') (Var k))
+
+-- adds n to every type variable ID in the type
+freshen :: Int -> Type -> Type
+freshen n (Var k)
+  = Var (n + k)
+freshen n (Function t t')
+  = Function (freshen n t) (freshen n t')
 
 -- type unification algorithm
 unify :: Type -> Type -> Sub
