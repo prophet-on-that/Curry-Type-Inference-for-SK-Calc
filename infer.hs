@@ -71,7 +71,7 @@ contained_in n (Function t t')
 -- principal type algorithm
 pt :: Term -> Type 
 pt 
-  = fst . pt' 
+  = normalise . fst . pt' 
   where 
     -- Returned Int is the largest allocated type variable identifier. Needed
     -- to handle `freshness'. Additionally, indexing identifiers from 1 here.
@@ -118,3 +118,17 @@ unify (Function t t') (Function u u')
       = unify t u
     s2
       = unify (apply s1 t') (apply s1 u')
+
+-- normalise a type; set type variable IDs to count consecutively from 1
+normalise :: Type -> Type
+normalise t 
+  = apply s t
+  where 
+    vars
+      = type_vars t
+    s
+      = zip vars (map (\n -> Var n) [1..])
+    type_vars (Var n)
+      = [(Var n)]
+    type_vars (Function t' t'')
+      = nub ((type_vars t') ++ (type_vars t''))
