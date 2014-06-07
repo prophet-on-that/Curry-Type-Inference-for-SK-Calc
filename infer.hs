@@ -1,9 +1,9 @@
 import Data.List
 import Data.Maybe
 
--- main = do
--- term <- getLine
--- putStrLn (show (parse term))
+main = do
+  term <- getLine
+  putStrLn . show . pt . parse $ term
 
 data Term 
   = S | K | App Term Term
