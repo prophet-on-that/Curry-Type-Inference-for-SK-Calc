@@ -1,10 +1,6 @@
 import Data.List
 import Data.Maybe
 
-main = do
-  term <- getLine
-  putStrLn . show . pt . parse $ term
-
 data Term 
   = S | K | App Term Term
   deriving Show
@@ -69,28 +65,25 @@ contained_in n (Function t t')
   = (contained_in n t) || (contained_in n t')
 
 -- principal type algorithm
-pt :: Term -> Type 
-pt 
-  = normalise . fst . pt' 
+pt :: Term -> Maybe Type 
+pt term
+--  = normalise . fst .pt'  
+  = (pt' term) >>= (\(t, k) -> Just (normalise t))
   where 
     -- Returned Int is the largest allocated type variable identifier. Needed
     -- to handle `freshness'. Additionally, indexing identifiers from 1 here.
-    pt' :: Term -> (Type, Int)
+    pt' :: Term -> Maybe (Type, Int)
     pt' S
-      = ((Function (Function (Var 1) (Function (Var 2) (Var 3))) (Function (Function (Var 1) (Var 2)) (Function (Var 1) (Var 3)))), 3)
+      = Just ((Function (Function (Var 1) (Function (Var 2) (Var 3))) (Function (Function (Var 1) (Var 2)) (Function (Var 1) (Var 3)))), 3)
     pt' K 
-      = ((Function (Var 1) (Function (Var 2) (Var 1))), 2)
+      = Just ((Function (Var 1) (Function (Var 2) (Var 1))), 2)
     pt' (App p q)
-      = (apply s (Var k), k)
-      where
-        (t, n)
-          = pt' p
-        (t', n')
-          = pt' q
-        k 
-          = n + n' + 1
-        s 
-          = unify t (Function (freshen n t') (Var k))
+      = do
+        (t, n) <- pt' p
+        (t', n') <- pt' q
+        let k = n + n' + 1
+        s <- unify t (Function (freshen n t') (Var k))
+        return (apply s (Var k), k)  
 
 -- adds n to every type variable ID in the type
 freshen :: Int -> Type -> Type
@@ -100,24 +93,22 @@ freshen n (Function t t')
   = Function (freshen n t) (freshen n t')
 
 -- type unification algorithm
-unify :: Type -> Type -> Sub
+unify :: Type -> Type -> Maybe Sub
 unify (Var m) (Var n)
   | m == n
-    = []
+    = Just []
 unify (Var m) t
   | not (contained_in m t)
-    = [((Var m), t)]
+    = Just [((Var m), t)]
   | otherwise 
-    = error "Ununifiable"
+    = Nothing
 unify t (Var m)
   = unify (Var m) t
 unify (Function t t') (Function u u')
-  = compose s2 s1
-  where
-    s1 
-      = unify t u
-    s2
-      = unify (apply s1 t') (apply s1 u')
+  = do
+    s1 <- unify t u
+    s2 <- unify (apply s1 t') (apply s1 u')
+    return (compose s2 s1)
 
 -- normalise a type; set type variable IDs to count consecutively from 1
 normalise :: Type -> Type
