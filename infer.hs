@@ -67,7 +67,6 @@ contained_in n (Function t t')
 -- principal type algorithm
 pt :: Term -> Maybe Type 
 pt term
---  = normalise . fst .pt'  
   = (pt' term) >>= (\(t, k) -> Just (normalise t))
   where 
     -- Returned Int is the largest allocated type variable identifier. Needed
@@ -116,7 +115,7 @@ normalise t
   = apply s t
   where 
     vars
-      = type_vars t
+      = nub . type_vars $ t
     s
       = zip vars (map (\n -> Var n) [1..])
     type_vars (Var n)
